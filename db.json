@@ -1,6 +1,6 @@
 {
   "products": [
-    { "id": 1, "name": "Laptop Pro 15", "price": 2300.00, "stock": 45, "category": "electronics", "active": true },
+    { "id": 1, "name": "Laptop Pro 15", "price": 2500.00, "stock": 45, "category": "electronics", "active": true },
     { "id": 2, "name": "Mouse Inalámbrico", "price": 29.99, "stock": 120, "category": "accessories", "active": true },
     { "id": 3, "name": "Monitor 27\"", "price": 349.99, "stock": 0, "category": "electronics", "active": false },
     { "id": 4, "name": "Teclado Mecánico", "price": 89.99, "stock": 67, "category": "accessories", "active": true }
