@@ -1,0 +1,21 @@
+{
+  "products": [
+    { "id": 1, "name": "Laptop Pro 15", "price": 2300.00, "stock": 45, "category": "electronics", "active": true },
+    { "id": 2, "name": "Mouse Inalámbrico", "price": 29.99, "stock": 120, "category": "accessories", "active": true },
+    { "id": 3, "name": "Monitor 27\"", "price": 349.99, "stock": 0, "category": "electronics", "active": false },
+    { "id": 4, "name": "Teclado Mecánico", "price": 89.99, "stock": 67, "category": "accessories", "active": true }
+  ],
+  "users": [
+    { "id": 1, "name": "Ana García", "email": "ana@test.com", "role": "admin", "active": true },
+    { "id": 2, "name": "Carlos López", "email": "carlos@test.com", "role": "customer", "active": true },
+    { "id": 3, "name": "María Torres", "email": "maria@test.com", "role": "customer", "active": false }
+  ],
+  "orders": [
+    { "id": 1, "userId": 2, "productId": 1, "quantity": 1, "total": 1299.99, "status": "completed" },
+    { "id": 2, "userId": 2, "productId": 2, "quantity": 2, "total": 59.98, "status": "pending" },
+    { "id": 3, "userId": 3, "productId": 4, "quantity": 1, "total": 89.99, "status": "cancelled" }
+  ],
+  "health": [
+    { "id": 1, "status": "ok", "version": "1.0.0", "timestamp": "2025-06-01T00:00:00Z" }
+  ]
+}
