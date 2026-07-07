@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce - Gestión</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f5f5f5; }
+    .navbar-brand { font-weight: 700; }
+    .card { border: none; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .table th { font-size: 12px; text-transform: uppercase; color: #6c757d; }
+    .badge { font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-4 mb-4">
+  <span class="navbar-brand">🛒 E-Commerce Admin</span>
+  <span id="apiStatus" class="badge bg-secondary">Verificando API...</span>
+</nav>
+
+<div class="container">
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('products', this)">Productos</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('users', this)">Usuarios</a></li>
+  </ul>
+
+  <!-- PRODUCTOS -->
+  <div id="tab-products">
+    <div class="row g-4">
+      <!-- Formulario -->
+      <div class="col-md-4">
+        <div class="card p-4">
+          <h6 class="fw-bold mb-3">Agregar producto</h6>
+          <p class="text-muted small mb-3">Los campos deben tener el tipo correcto para que la API funcione.</p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Nombre</label>
+            <input type="text" class="form-control" id="p-name" placeholder="Ej: Laptop Pro">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Precio <span class="text-muted">(debe ser número)</span></label>
+            <input type="text" class="form-control" id="p-price" placeholder="Déjalo vacío o escribe abc">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Stock <span class="text-muted">(debe ser número)</span></label>
+            <input type="text" class="form-control" id="p-stock" placeholder="Déjalo vacío o escribe mucho">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Categoría</label>
+            <select class="form-select" id="p-category">
+              <option value="electronics">Electronics</option>
+              <option value="accessories">Accessories</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-100" onclick="saveProduct()">Guardar producto</button>
+          <div id="p-msg" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="col-md-8">
+        <div class="card p-4">
+          <h6 class="fw-bold mb-3">Productos registrados</h6>
+          <div id="products-list">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USUARIOS -->
+  <div id="tab-users" style="display:none">
+    <div class="row g-4">
+      <!-- Formulario -->
+      <div class="col-md-4">
+        <div class="card p-4">
+          <h6 class="fw-bold mb-3">Agregar usuario</h6>
+          <p class="text-muted small mb-3">Intenta ingresar un nombre con números o un email sin @.</p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Nombre <span class="text-muted">(debe ser texto)</span></label>
+            <input type="text" class="form-control" id="u-name" placeholder="Ej: Juan o '12345'">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email <span class="text-muted">(debe tener @)</span></label>
+            <input type="text" class="form-control" id="u-email" placeholder="Déjalo vacío o sin @">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Rol</label>
+            <select class="form-select" id="u-role">
+              <option value="customer">Customer</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-100" onclick="saveUser()">Guardar usuario</button>
+          <div id="u-msg" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="col-md-8">
+        <div class="card p-4">
+          <h6 class="fw-bold mb-3">Usuarios registrados</h6>
+          <div id="users-list">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = 'http://localhost:3001';
+
+async function req(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  return res.json();
+}
+
+function showTab(name, el) {
+  document.getElementById('tab-products').style.display = 'none';
+  document.getElementById('tab-users').style.display = 'none';
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  if (name === 'products') loadProducts();
+  else loadUsers();
+  return false;
+}
+
+// API status
+async function checkStatus() {
+  try {
+    await req('/health');
+    document.getElementById('apiStatus').className = 'badge bg-success';
+    document.getElementById('apiStatus').textContent = '✓ API conectada';
+  } catch {
+    document.getElementById('apiStatus').className = 'badge bg-danger';
+    document.getElementById('apiStatus').textContent = '✗ API desconectada';
+  }
+}
+
+// Productos
+async function loadProducts() {
+  try {
+    const products = await req('/products');
+    const rows = products.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td class="${typeof p.price !== 'number' ? 'text-danger fw-bold' : ''}">${p.price ?? '<em>vacío</em>'}</td>
+        <td class="${typeof p.stock !== 'number' ? 'text-danger fw-bold' : ''}">${p.stock ?? '<em>vacío</em>'}</td>
+        <td>${p.category}</td>
+        <td><button class="btn btn-outline-danger btn-sm" onclick="deleteProduct(${p.id})">Eliminar</button></td>
+      </tr>`).join('');
+    document.getElementById('products-list').innerHTML = `
+      <table class="table table-sm table-hover">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch {
+    document.getElementById('products-list').innerHTML = '<p class="text-danger">Error al cargar. ¿Está corriendo JSON Server?</p>';
+  }
+}
+
+async function saveProduct() {
+  const name = document.getElementById('p-name').value.trim();
+  const priceRaw = document.getElementById('p-price').value.trim();
+  const stockRaw = document.getElementById('p-stock').value.trim();
+  const category = document.getElementById('p-category').value;
+  const msg = document.getElementById('p-msg');
+
+  if (!name) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 small">El nombre es obligatorio.</div>';
+    return;
+  }
+
+  // Guardamos tal cual el usuario ingresó — número o texto
+  // Si está vacío lo mandamos como null (campo ausente para N8N)
+  const price = priceRaw === '' ? null : (isNaN(priceRaw) ? priceRaw : parseFloat(priceRaw));
+  const stock = stockRaw === '' ? null : (isNaN(stockRaw) ? stockRaw : parseInt(stockRaw));
+
+  const priceValid = typeof price === 'number';
+  const stockValid = typeof stock === 'number';
+
+  // Construimos el objeto — si es null omitimos el campo
+  const product = { name, category, active: true };
+  if (price !== null) product.price = price;
+  if (stock !== null) product.stock = stock;
+
+  await req('/products', 'POST', product);
+
+  if (priceValid && stockValid) {
+    msg.innerHTML = '<div class="alert alert-success py-2 small">✅ Producto guardado. N8N marcará PASS.</div>';
+  } else {
+    let issues = [];
+    if (!priceValid) issues.push('precio ' + (price === null ? 'vacío' : 'no numérico'));
+    if (!stockValid) issues.push('stock ' + (stock === null ? 'vacío' : 'no numérico'));
+    msg.innerHTML = '<div class="alert alert-danger py-2 small">⚠️ Guardado con ' + issues.join(' y ') + '. N8N detectará el fallo.</div>';
+  }
+
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-price').value = '';
+  document.getElementById('p-stock').value = '';
+  loadProducts();
+}
+
+async function deleteProduct(id) {
+  await req('/products/' + id, 'DELETE');
+  loadProducts();
+}
+
+// Usuarios
+async function loadUsers() {
+  try {
+    const users = await req('/users');
+    const rows = users.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td class="${/\d/.test(u.name) ? 'text-danger fw-bold' : ''}">${u.name}</td>
+        <td class="${!u.email?.includes('@') ? 'text-danger fw-bold' : ''}">${u.email ?? '<em>vacío</em>'}</td>
+        <td>${u.role}</td>
+        <td><button class="btn btn-outline-danger btn-sm" onclick="deleteUser(${u.id})">Eliminar</button></td>
+      </tr>`).join('');
+    document.getElementById('users-list').innerHTML = `
+      <table class="table table-sm table-hover">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch {
+    document.getElementById('users-list').innerHTML = '<p class="text-danger">Error al cargar.</p>';
+  }
+}
+
+async function saveUser() {
+  const name = document.getElementById('u-name').value.trim();
+  const email = document.getElementById('u-email').value.trim();
+  const role = document.getElementById('u-role').value;
+  const msg = document.getElementById('u-msg');
+
+  if (!name) {
+    msg.innerHTML = '<div class="alert alert-warning py-2 small">El nombre es obligatorio.</div>';
+    return;
+  }
+
+  const emailValid = email !== '' && email.includes('@');
+
+  // Si email está vacío lo omitimos del objeto
+  const user = { name, role, active: true };
+  if (email !== '') user.email = email;
+
+  await req('/users', 'POST', user);
+
+  if (emailValid) {
+    msg.innerHTML = '<div class="alert alert-success py-2 small">✅ Usuario guardado. N8N marcará PASS.</div>';
+  } else {
+    const issue = email === '' ? 'email vacío (campo ausente)' : 'email sin @';
+    msg.innerHTML = '<div class="alert alert-danger py-2 small">⚠️ Guardado con ' + issue + '. N8N detectará el fallo.</div>';
+  }
+
+  document.getElementById('u-name').value = '';
+  document.getElementById('u-email').value = '';
+  loadUsers();
+}
+
+async function deleteUser(id) {
+  await req('/users/' + id, 'DELETE');
+  loadUsers();
+}
+
+checkStatus();
+loadProducts();
+</script>
+</body>
+</html>
